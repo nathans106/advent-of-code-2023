@@ -1,4 +1,3 @@
-use std::ops::Index;
 use std::str::Lines;
 use itertools::Itertools;
 
@@ -32,7 +31,8 @@ impl ConversionMap {
 fn parse_data(data: &str) -> (Vec<u32>, Vec<ConversionMap>) {
     let mut data_iter = data.lines().into_iter();
     let seeds_str: String = data_iter.next().unwrap().chars().skip(7).collect();
-    let seeds = seeds_str.split(" ").map(|seed_str| seeds_str.parse::<u32>().unwrap()).collect();
+    let seeds = seeds_str.split(" ").map(|seed_str| seed_str.parse::<u32>().unwrap()).collect();
+    data_iter.next();
 
     let mut conversions = vec![];
     for _ in 0..7 {
@@ -47,13 +47,15 @@ fn parse_map(data_iter: &mut Lines) -> ConversionMap {
     data_iter.next();
     let mut line = data_iter.next().unwrap();
 
-    while(!line.is_empty()) {
+    while !line.is_empty() {
         let (source, destination, length) = line.split(" ").map(|num_str| num_str.parse::<u32>().unwrap()).collect_tuple().unwrap();
         ranges.push(ConversionRange{
             source,
             destination,
             length
         });
+
+        line = data_iter.next().unwrap();
     }
 
     ConversionMap{
@@ -107,10 +109,15 @@ temperature-to-humidity map:
 
 humidity-to-location map:
 60 56 37
-56 93 4";
+56 93 4
+
+";
 
         let (seeds, conversions) = parse_data(data);
         let locations: Vec<u32> = seeds.iter().map(|seed| evaluate_location(*seed, &conversions)).collect();
+
+        assert_eq!(locations, vec![82, 43, 86, 35]);
+
         let min_location = locations.iter().min().unwrap();
         assert_eq!(min_location, &35);
     }
